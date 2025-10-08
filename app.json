@@ -4,11 +4,11 @@
     "slug": "MoisesWaterRefillingStation",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/moiseswater.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/moiseswater.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,20 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/moiseswater.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.MoisesWaterRefillingStation"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/moiseswater.png",
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9288861a-e73b-418f-9340-042a93bb557f"
+      }
     }
   }
 }
