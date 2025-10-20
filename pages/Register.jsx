@@ -7,36 +7,33 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
-import { MotiView } from "moti";
 import { LinearGradient } from "expo-linear-gradient";
+import { MotiView } from "moti";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import Register from "./Register";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-export default function Login({ onLoginSuccess }) {
+export default function Register({ onGoToLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showRegister, setShowRegister] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // If user toggles to register
-  if (showRegister) {
-    return <Register onGoToLogin={() => setShowRegister(false)} />;
-  }
+  const handleRegister = () => {
+    if (!email || !password || !confirmPassword)
+      return Alert.alert("Error", "Fill all fields");
+    if (password !== confirmPassword)
+      return Alert.alert("Error", "Passwords do not match");
+    if (password.length < 6)
+      return Alert.alert("Error", "Password must be 6+ characters");
 
-  const handleLogin = () => {
-    if (!email || !password)
-      return Alert.alert("Error", "Please enter email and password");
-
-    signInWithEmailAndPassword(auth, email, password)
+    createUserWithEmailAndPassword(auth, email, password)
       .then(() => {
-        onLoginSuccess(); // Notify parent that login succeeded
+        Alert.alert("Success", "Account created successfully! Please login.");
+        onGoToLogin(); // Switch to login automatically
       })
-      .catch((error) => {
-        Alert.alert("Login Failed", error.message);
-      });
+      .catch((err) => Alert.alert("Registration Failed", err.message));
   };
 
   const bubbles = [
@@ -75,13 +72,13 @@ export default function Login({ onLoginSuccess }) {
         />
       ))}
 
-      {/* Login Card */}
+      {/* Register Card */}
       <View className="bg-white rounded-3xl p-8 w-full shadow-xl z-10">
         <Text className="text-4xl font-extrabold text-center text-blue-900 mb-6">
-          MOISES WATER
+          Create Account
         </Text>
         <Text className="text-center text-blue-700 mb-6">
-          Refresh your life with clean, safe water. Login below.
+          Refresh your life with clean, safe water. Create your account below.
         </Text>
 
         <TextInput
@@ -96,24 +93,28 @@ export default function Login({ onLoginSuccess }) {
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
+          className="border border-blue-300 rounded-xl p-4 mb-4 text-blue-900"
+          secureTextEntry
+        />
+        <TextInput
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
           className="border border-blue-300 rounded-xl p-4 mb-6 text-blue-900"
           secureTextEntry
         />
 
         <TouchableOpacity
-          onPress={handleLogin}
+          onPress={handleRegister}
           className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 p-4 rounded-xl flex-row justify-center items-center mb-4 shadow-lg"
         >
-          <Ionicons name="log-in-outline" size={22} color="#fff" />
-          <Text className="text-white font-bold ml-2 text-lg">Login</Text>
+          <Ionicons name="person-add-outline" size={22} color="#fff" />
+          <Text className="text-white font-bold ml-2 text-lg">Register</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setShowRegister(true)}
-          className="self-center mt-2"
-        >
+        <TouchableOpacity onPress={onGoToLogin} className="self-center mt-2">
           <Text className="text-blue-800 font-semibold text-lg">
-            Don't have an account? Register
+            Already have an account? Login
           </Text>
         </TouchableOpacity>
       </View>

@@ -135,7 +135,6 @@ export default function About() {
       </View>
 
       {/* Footer */}
-      <Footer />
     </ScrollView>
   );
 }

@@ -27,7 +27,7 @@ export default function Home({ navigation }) {
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       {/* Hero Section */}
       <LinearGradient
-        colors={["#93c5fd", "#3b82f6", "#1e40af"]} // light blue -> medium blue -> dark blue
+        colors={["#93c5fd", "#3b82f6", "#1e40af"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={{
@@ -38,6 +38,7 @@ export default function Home({ navigation }) {
           overflow: "hidden",
         }}
       >
+        {/* Floating bubbles */}
         {bubbles.map((b, i) => (
           <MotiView
             key={i}
@@ -91,7 +92,9 @@ export default function Home({ navigation }) {
               gap: 12,
             }}
           >
+            {/* Navigate to Order Page */}
             <TouchableOpacity
+              onPress={() => navigation.navigate("Order")}
               style={{
                 paddingHorizontal: 24,
                 paddingVertical: 12,
@@ -137,59 +140,6 @@ export default function Home({ navigation }) {
           <Wave height={160} />
         </View>
       </LinearGradient>
-
-      {/* CTA Section */}
-      <LinearGradient
-        colors={["#3b82f6", "#2563eb", "#1e40af"]} // medium -> dark blue
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{
-          minHeight: SCREEN_HEIGHT / 1.5,
-          justifyContent: "center",
-          alignItems: "center",
-          paddingHorizontal: 24,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 32,
-            fontWeight: "800",
-            color: "white",
-            textAlign: "center",
-          }}
-        >
-          Stay Hydrated Today
-        </Text>
-        <Text
-          style={{
-            marginTop: 16,
-            fontSize: 16,
-            color: "#e0f2fe",
-            textAlign: "center",
-          }}
-        >
-          Order now and enjoy refreshing water straight from Moises Water.
-        </Text>
-        <TouchableOpacity
-          style={{
-            marginTop: 32,
-            paddingHorizontal: 32,
-            paddingVertical: 12,
-            backgroundColor: "white",
-            borderRadius: 24,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <Ionicons name="bag-outline" size={18} color="#2563eb" />
-          <Text style={{ color: "#2563eb", fontWeight: "700" }}>
-            Get Started
-          </Text>
-        </TouchableOpacity>
-      </LinearGradient>
-
-      <Footer />
     </ScrollView>
   );
 }

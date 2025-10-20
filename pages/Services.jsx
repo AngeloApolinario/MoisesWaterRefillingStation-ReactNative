@@ -110,7 +110,6 @@ export default function Services() {
       </View>
 
       {/* Footer */}
-      <Footer />
     </ScrollView>
   );
 }

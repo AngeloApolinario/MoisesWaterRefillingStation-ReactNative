@@ -122,7 +122,6 @@ export default function Contact() {
       </View>
 
       {/* Footer */}
-      <Footer />
     </ScrollView>
   );
 }
