@@ -102,7 +102,7 @@ export default function Login({ onLoginSuccess }) {
 
         <TouchableOpacity
           onPress={handleLogin}
-          className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 p-4 rounded-xl flex-row justify-center items-center mb-4 shadow-lg"
+          className="bg-blue-600 p-4 rounded-xl flex-row justify-center items-center mb-4 shadow-lg"
         >
           <Ionicons name="log-in-outline" size={22} color="#fff" />
           <Text className="text-white font-bold ml-2 text-lg">Login</Text>
