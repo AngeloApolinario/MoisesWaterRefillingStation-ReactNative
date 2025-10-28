@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
@@ -22,102 +25,141 @@ export default function Register({ onGoToLogin }) {
 
   const handleRegister = () => {
     if (!email || !password || !confirmPassword)
-      return Alert.alert("Error", "Fill all fields");
+      return Alert.alert("Error", "Please fill out all fields");
     if (password !== confirmPassword)
       return Alert.alert("Error", "Passwords do not match");
     if (password.length < 6)
-      return Alert.alert("Error", "Password must be 6+ characters");
+      return Alert.alert("Error", "Password must be at least 6 characters");
 
     createUserWithEmailAndPassword(auth, email, password)
       .then(() => {
-        Alert.alert("Success", "Account created successfully! Please login.");
-        onGoToLogin(); // Switch to login automatically
+        Alert.alert("Success", "Account created successfully! Please log in.");
+        onGoToLogin();
       })
       .catch((err) => Alert.alert("Registration Failed", err.message));
   };
 
   const bubbles = [
-    { size: 20, left: "10%", delay: 0 },
-    { size: 30, left: "25%", delay: 1 },
-    { size: 15, left: "50%", delay: 2 },
-    { size: 25, left: "70%", delay: 1.5 },
-    { size: 18, left: "85%", delay: 0.5 },
+    { size: 25, left: "10%", delay: 0 },
+    { size: 35, left: "25%", delay: 1 },
+    { size: 20, left: "50%", delay: 2 },
+    { size: 40, left: "70%", delay: 1.5 },
+    { size: 22, left: "85%", delay: 0.5 },
   ];
 
   return (
     <LinearGradient
-      colors={["#93c5fd", "#3b82f6", "#1e40af"]}
+      colors={["#60a5fa", "#2563eb", "#1e3a8a"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="flex-1 justify-center items-center px-6 relative overflow-hidden"
+      className="flex-1 justify-center items-center relative overflow-hidden"
     >
-      {/* Animated bubbles */}
+      {/* Animated floating bubbles */}
       {bubbles.map((b, i) => (
         <MotiView
           key={i}
           from={{ translateY: 0, opacity: 0.4 }}
           animate={{ translateY: -SCREEN_HEIGHT, opacity: 0 }}
           transition={{
-            duration: 4000 + i * 500,
+            duration: 5000 + i * 600,
             repeat: Infinity,
             delay: b.delay * 1000,
           }}
-          className="absolute bg-white rounded-full"
+          className="absolute bg-white/30 rounded-full"
           style={{
             width: b.size,
             height: b.size,
             left: b.left,
-            bottom: 40,
+            bottom: 20,
           }}
         />
       ))}
 
-      {/* Register Card */}
-      <View className="bg-white rounded-3xl p-8 w-full shadow-xl z-10">
-        <Text className="text-4xl font-extrabold text-center text-blue-900 mb-6">
-          Create Account
-        </Text>
-        <Text className="text-center text-blue-700 mb-6">
-          Refresh your life with clean, safe water. Create your account below.
-        </Text>
-
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          className="border border-blue-300 rounded-xl p-4 mb-4 text-blue-900"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          className="border border-blue-300 rounded-xl p-4 mb-4 text-blue-900"
-          secureTextEntry
-        />
-        <TextInput
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          className="border border-blue-300 rounded-xl p-4 mb-6 text-blue-900"
-          secureTextEntry
-        />
-
-        <TouchableOpacity
-          onPress={handleRegister}
-          className="bg-blue-600 p-4 rounded-xl flex-row justify-center items-center mb-4 shadow-lg"
-        >
-          <Ionicons name="person-add-outline" size={22} color="#fff" />
-          <Text className="text-white font-bold ml-2 text-lg">Register</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onGoToLogin} className="self-center mt-2">
-          <Text className="text-blue-800 font-semibold text-lg">
-            Already have an account? Login
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        className="w-full px-6 z-10"
+      >
+        {/* Branding / Header */}
+        <View className="items-center mb-10">
+          <Image
+            source={{
+              uri: "https://cdn-icons-png.flaticon.com/512/2917/2917995.png",
+            }}
+            style={{ width: 90, height: 90 }}
+          />
+          <Text className="text-4xl font-extrabold text-white mt-4 tracking-widest">
+            MOISES WATER
           </Text>
-        </TouchableOpacity>
-      </View>
+          <Text className="text-blue-100 text-center mt-2">
+            Clean, safe, and refreshing — join us today!
+          </Text>
+        </View>
+
+        {/* Glassmorphism Registration Card */}
+        <View
+          className="rounded-3xl p-8 w-full shadow-2xl"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.15)",
+            borderColor: "rgba(255,255,255,0.3)",
+            borderWidth: 1,
+          }}
+        >
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor="#e0e7ff"
+            value={email}
+            onChangeText={setEmail}
+            className="border border-white/40 rounded-xl p-4 mb-4 text-white text-base"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#e0e7ff"
+            value={password}
+            onChangeText={setPassword}
+            className="border border-white/40 rounded-xl p-4 mb-4 text-white text-base"
+            secureTextEntry
+          />
+          <TextInput
+            placeholder="Confirm Password"
+            placeholderTextColor="#e0e7ff"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            className="border border-white/40 rounded-xl p-4 mb-6 text-white text-base"
+            secureTextEntry
+          />
+
+          {/* Register Button */}
+          <TouchableOpacity
+            onPress={handleRegister}
+            activeOpacity={0.8}
+            className="p-4 rounded-xl flex-row justify-center items-center mb-4 shadow-lg"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.2)",
+              borderColor: "rgba(255,255,255,0.5)",
+              borderWidth: 1,
+            }}
+          >
+            <Ionicons name="person-add-outline" size={22} color="#fff" />
+            <Text className="text-white font-semibold ml-2 text-lg">
+              Register
+            </Text>
+          </TouchableOpacity>
+
+          {/* Go to Login */}
+          <TouchableOpacity onPress={onGoToLogin} className="self-center mt-2">
+            <Text className="text-blue-100 font-semibold text-lg">
+              Already have an account? <Text className="underline">Login</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+
+      {/* Footer */}
+      <Text className="absolute bottom-6 text-blue-100 text-sm opacity-80">
+        © 2025 Moises Water. All rights reserved.
+      </Text>
     </LinearGradient>
   );
 }

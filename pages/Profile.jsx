@@ -7,8 +7,10 @@ import {
   ActivityIndicator,
   Dimensions,
   StyleSheet,
+  TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
 import {
@@ -27,7 +29,10 @@ const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 export default function Profile({ onLogout }) {
   const [email, setEmail] = useState("");
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
 
   const db = getDatabase();
 
@@ -48,14 +53,39 @@ export default function Profile({ onLogout }) {
           ...data[key],
         }));
         setOrders(parsedOrders.reverse());
+        setFilteredOrders(parsedOrders.reverse());
       } else {
         setOrders([]);
+        setFilteredOrders([]);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  // 🔍 Handle Search & Filter
+  useEffect(() => {
+    let updatedOrders = orders;
+
+    if (filterStatus !== "All") {
+      updatedOrders = updatedOrders.filter(
+        (order) => order.status === filterStatus
+      );
+    }
+
+    if (searchQuery.trim() !== "") {
+      const queryLower = searchQuery.toLowerCase();
+      updatedOrders = updatedOrders.filter(
+        (order) =>
+          order.customerName.toLowerCase().includes(queryLower) ||
+          order.phone.includes(queryLower) ||
+          order.address?.toLowerCase().includes(queryLower)
+      );
+    }
+
+    setFilteredOrders(updatedOrders);
+  }, [searchQuery, filterStatus, orders]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -74,7 +104,7 @@ export default function Profile({ onLogout }) {
     <MotiView
       from={{ opacity: 0, translateY: 20 }}
       animate={{ opacity: 1, translateY: 0 }}
-      transition={{ duration: 500 }}
+      transition={{ duration: 400 }}
       style={styles.orderCard}
     >
       <View style={styles.orderHeader}>
@@ -111,6 +141,11 @@ export default function Profile({ onLogout }) {
         <Text style={styles.orderText}>
           Container: {item.hasContainer ? "Yes" : "No"}
         </Text>
+      </View>
+
+      <View style={styles.orderRow}>
+        <Ionicons name="water-outline" size={18} color="#2563eb" />
+        <Text style={styles.orderText}>Quantity: {item.quantity}</Text>
       </View>
 
       <View style={[styles.orderRow, { marginTop: 8 }]}>
@@ -157,33 +192,70 @@ export default function Profile({ onLogout }) {
         >
           Profile
         </MotiText>
-        <Text style={styles.email}>{email}</Text>
-        <TouchableOpacity
-          onPress={() => signOut(auth).then(onLogout)}
-          style={styles.logoutButton}
-        >
-          <Ionicons name="log-out-outline" size={20} color="#2563eb" />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+
+        <BlurView intensity={90} tint="light" style={styles.infoCard}>
+          <Ionicons name="person-circle-outline" size={70} color="#1e3a8a" />
+          <Text style={styles.email}>{email}</Text>
+
+          <TouchableOpacity
+            onPress={() => signOut(auth).then(onLogout)}
+            style={styles.logoutButton}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#1e3a8a" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </BlurView>
+      </View>
+
+      {/* Search + Filter */}
+      <View style={styles.filterContainer}>
+        <TextInput
+          placeholder="Search by name, phone, or address"
+          placeholderTextColor="#9ca3af"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+        />
+
+        <View style={styles.filterButtons}>
+          {["All", "Pending", "On the Way", "Delivered"].map((status) => (
+            <TouchableOpacity
+              key={status}
+              onPress={() => setFilterStatus(status)}
+              style={[
+                styles.filterButton,
+                filterStatus === status && styles.filterButtonActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  filterStatus === status && styles.filterTextActive,
+                ]}
+              >
+                {status}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Orders */}
       <View style={styles.ordersContainer}>
-        <Text style={styles.ordersTitle}>My Orders</Text>
         {loading ? (
           <ActivityIndicator
             size="large"
             color="#fff"
             style={{ marginTop: 40 }}
           />
-        ) : orders.length === 0 ? (
-          <Text style={styles.noOrdersText}>You have no orders yet.</Text>
+        ) : filteredOrders.length === 0 ? (
+          <Text style={styles.noOrdersText}>No matching orders found.</Text>
         ) : (
           <FlatList
-            data={orders}
+            data={filteredOrders}
             renderItem={renderOrder}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           />
         )}
@@ -208,47 +280,87 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 20,
+  },
+  infoCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    padding: 20,
+    borderRadius: 20,
+    alignItems: "center",
+    width: "85%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
   },
   title: {
     color: "white",
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: "800",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   email: {
-    color: "#e0f2fe",
+    color: "#1e3a8a",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
+    marginBottom: 10,
   },
   logoutButton: {
     backgroundColor: "white",
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowRadius: 4,
     elevation: 6,
   },
   logoutText: {
-    color: "#2563eb",
-    fontWeight: "600",
+    color: "#1e3a8a",
+    fontWeight: "700",
+    fontSize: 15,
+    marginLeft: 6,
+  },
+  filterContainer: {
+    marginBottom: 14,
+  },
+  searchInput: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 10,
     fontSize: 14,
+    marginBottom: 10,
+  },
+  filterButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+  },
+  filterButton: {
+    backgroundColor: "rgba(255,255,255,0.3)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+  filterButtonActive: {
+    backgroundColor: "white",
+  },
+  filterText: {
+    color: "white",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  filterTextActive: {
+    color: "#1e3a8a",
+    fontWeight: "700",
   },
   ordersContainer: {
     flex: 1,
-  },
-  ordersTitle: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 16,
   },
   noOrdersText: {
     color: "#f0f9ff",
@@ -257,7 +369,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   orderCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 20,
     padding: 16,
     width: SCREEN_WIDTH - 48,
@@ -265,11 +377,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
   },
   orderHeader: {
     flexDirection: "row",

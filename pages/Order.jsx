@@ -19,28 +19,37 @@ export default function Order() {
   const [address, setAddress] = useState("");
   const [hasContainer, setHasContainer] = useState(false);
   const [delivery, setDelivery] = useState(false);
+  const [quantity, setQuantity] = useState("1");
   const [message, setMessage] = useState("");
 
-  // Replace with your Firebase logic
   const handleOrder = () => {
-    if (!customerName || !phone || (delivery && !address)) {
+    if (!customerName || !phone || (delivery && !address) || !quantity) {
       return Alert.alert("Error", "Please fill all required fields");
     }
-    const totalPrice = (!hasContainer ? 200 : 0) + (delivery ? 30 : 25);
+
+    const qty = parseInt(quantity);
+    if (isNaN(qty) || qty <= 0) {
+      return Alert.alert("Error", "Quantity must be a positive number");
+    }
+
+    const totalPrice = calculatePrice();
+
     setMessage(`Order placed! Total: ₱${totalPrice}`);
     setCustomerName("");
     setPhone("");
     setAddress("");
+    setQuantity("1");
     setHasContainer(false);
     setDelivery(false);
+
     setTimeout(() => setMessage(""), 4000);
   };
 
   const calculatePrice = () => {
-    let price = 0;
-    if (!hasContainer) price += 200;
-    if (delivery) price += 30;
-    return price;
+    let pricePerContainer = hasContainer ? 0 : 200; // container fee if no container
+    let deliveryFee = delivery ? 30 : 25; // delivery or pickup fee
+    const qty = parseInt(quantity) || 0;
+    return qty * pricePerContainer + deliveryFee;
   };
 
   return (
@@ -48,10 +57,9 @@ export default function Order() {
       contentContainerStyle={{ flexGrow: 1, backgroundColor: "#eff6ff" }}
     >
       {/* Hero Section */}
-
       <View style={{ position: "relative" }}>
         <LinearGradient
-          colors={["#93c5fd", "#3b82f6", "#1e40af"]} // ✅ Gradient colors
+          colors={["#93c5fd", "#3b82f6", "#1e40af"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -83,7 +91,7 @@ export default function Order() {
           </Text>
         </LinearGradient>
 
-        {/* Wave */}
+        {/* Wave effect */}
         <View
           style={{ position: "absolute", bottom: -1, left: 0, width: "100%" }}
         >
@@ -91,7 +99,7 @@ export default function Order() {
         </View>
       </View>
 
-      {/* Order Form Card */}
+      {/* Order Form */}
       <View style={{ paddingHorizontal: 16, marginTop: 32, marginBottom: 32 }}>
         <MotiView
           from={{ scale: 0.95, opacity: 0 }}
@@ -121,6 +129,7 @@ export default function Order() {
             </Text>
           )}
 
+          {/* Inputs */}
           <TextInput
             placeholder="Name"
             value={customerName}
@@ -147,6 +156,22 @@ export default function Order() {
             }}
           />
 
+          {/* Quantity */}
+          <TextInput
+            placeholder="Quantity"
+            value={quantity}
+            onChangeText={setQuantity}
+            keyboardType="numeric"
+            style={{
+              borderWidth: 1,
+              borderColor: "#93c5fd",
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 12,
+            }}
+          />
+
+          {/* Container Option */}
           <View
             style={{
               flexDirection: "row",
@@ -173,6 +198,7 @@ export default function Order() {
             </TouchableOpacity>
           </View>
 
+          {/* Delivery Option */}
           <View
             style={{
               flexDirection: "row",
@@ -199,6 +225,7 @@ export default function Order() {
             </TouchableOpacity>
           </View>
 
+          {/* Address Field (only if delivery) */}
           {delivery && (
             <TextInput
               placeholder="Address"
@@ -214,6 +241,7 @@ export default function Order() {
             />
           )}
 
+          {/* Order Button */}
           <TouchableOpacity
             onPress={handleOrder}
             style={{
@@ -232,8 +260,14 @@ export default function Order() {
             </Text>
           </TouchableOpacity>
 
+          {/* Total */}
           <Text
-            style={{ textAlign: "center", color: "#1e40af", fontWeight: "600" }}
+            style={{
+              textAlign: "center",
+              color: "#1e40af",
+              fontWeight: "700",
+              fontSize: 16,
+            }}
           >
             Total: ₱{calculatePrice()}
           </Text>
