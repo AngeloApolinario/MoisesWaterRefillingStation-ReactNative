@@ -10,19 +10,50 @@ import {
 } from "react-native";
 import { MotiView } from "moti";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import Wave from "../components/Wave";
 import { LinearGradient } from "expo-linear-gradient";
+import Wave from "../components/Wave";
+import { ref, push } from "firebase/database";
+import { database, auth } from "../firebaseConfig";
 
 export default function Order() {
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [hasContainer, setHasContainer] = useState(false);
+  const [hasContainer, setHasContainer] = useState(true);
   const [delivery, setDelivery] = useState(false);
   const [quantity, setQuantity] = useState("1");
   const [message, setMessage] = useState("");
 
-  const handleOrder = () => {
+  const REFILL_PRICE = 25;
+  const CONTAINER_PRICE = 200;
+  const DELIVERY_FLAT = 5;
+
+  // Correct calculation: per refill/container, delivery fee is per unit
+  const calculatePrice = () => {
+    const qty = parseInt(quantity) || 0;
+    let total = 0;
+
+    total += qty * REFILL_PRICE; // refill cost
+    if (!hasContainer) total += qty * CONTAINER_PRICE; // container cost
+    if (delivery) total += qty * DELIVERY_FLAT; // delivery fee per unit
+
+    return total;
+  };
+
+  const getBreakdown = () => {
+    const qty = parseInt(quantity) || 0;
+    const refill = qty * REFILL_PRICE;
+    const container = !hasContainer ? qty * CONTAINER_PRICE : 0;
+    const deliveryFee = delivery ? qty * DELIVERY_FLAT : 0;
+    const total = refill + container + deliveryFee;
+    return { refill, container, deliveryFee, total };
+  };
+
+  const handleOrder = async () => {
+    const user = auth.currentUser;
+    if (!user)
+      return Alert.alert("Error", "You must be logged in to place an order.");
+
     if (!customerName || !phone || (delivery && !address) || !quantity) {
       return Alert.alert("Error", "Please fill all required fields");
     }
@@ -34,29 +65,41 @@ export default function Order() {
 
     const totalPrice = calculatePrice();
 
-    setMessage(`Order placed! Total: ₱${totalPrice}`);
-    setCustomerName("");
-    setPhone("");
-    setAddress("");
-    setQuantity("1");
-    setHasContainer(false);
-    setDelivery(false);
+    const newOrder = {
+      userId: user.uid,
+      customerName,
+      phone,
+      address: delivery ? address : "Pickup at Moises Water Station",
+      hasContainer,
+      delivery,
+      quantity: qty,
+      price: totalPrice,
+      status: "Pending",
+      createdAt: Date.now(),
+    };
 
-    setTimeout(() => setMessage(""), 4000);
+    try {
+      await push(ref(database, "orders"), newOrder);
+      setMessage(`Order placed successfully! Total: ₱${totalPrice}`);
+      setCustomerName("");
+      setPhone("");
+      setAddress("");
+      setQuantity("1");
+      setHasContainer(true);
+      setDelivery(false);
+      setTimeout(() => setMessage(""), 4000);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to place order. Try again.");
+    }
   };
 
-  const calculatePrice = () => {
-    let pricePerContainer = hasContainer ? 0 : 200; // container fee if no container
-    let deliveryFee = delivery ? 30 : 25; // delivery or pickup fee
-    const qty = parseInt(quantity) || 0;
-    return qty * pricePerContainer + deliveryFee;
-  };
+  const { refill, container, deliveryFee, total } = getBreakdown();
 
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1, backgroundColor: "#eff6ff" }}
     >
-      {/* Hero Section */}
       <View style={{ position: "relative" }}>
         <LinearGradient
           colors={["#93c5fd", "#3b82f6", "#1e40af"]}
@@ -91,7 +134,6 @@ export default function Order() {
           </Text>
         </LinearGradient>
 
-        {/* Wave effect */}
         <View
           style={{ position: "absolute", bottom: -1, left: 0, width: "100%" }}
         >
@@ -99,7 +141,6 @@ export default function Order() {
         </View>
       </View>
 
-      {/* Order Form */}
       <View style={{ paddingHorizontal: 16, marginTop: 32, marginBottom: 32 }}>
         <MotiView
           from={{ scale: 0.95, opacity: 0 }}
@@ -129,9 +170,8 @@ export default function Order() {
             </Text>
           )}
 
-          {/* Inputs */}
           <TextInput
-            placeholder="Name"
+            placeholder="Full Name"
             value={customerName}
             onChangeText={setCustomerName}
             style={{
@@ -142,6 +182,7 @@ export default function Order() {
               marginBottom: 12,
             }}
           />
+
           <TextInput
             placeholder="Phone"
             value={phone}
@@ -156,7 +197,6 @@ export default function Order() {
             }}
           />
 
-          {/* Quantity */}
           <TextInput
             placeholder="Quantity"
             value={quantity}
@@ -171,7 +211,6 @@ export default function Order() {
             }}
           />
 
-          {/* Container Option */}
           <View
             style={{
               flexDirection: "row",
@@ -189,7 +228,7 @@ export default function Order() {
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 borderRadius: 12,
-                backgroundColor: hasContainer ? "#2563eb" : "#bfdbfe",
+                backgroundColor: hasContainer ? "#2563eb" : "#ef4444",
               }}
             >
               <Text style={{ color: "white", fontWeight: "600" }}>
@@ -198,7 +237,6 @@ export default function Order() {
             </TouchableOpacity>
           </View>
 
-          {/* Delivery Option */}
           <View
             style={{
               flexDirection: "row",
@@ -225,10 +263,9 @@ export default function Order() {
             </TouchableOpacity>
           </View>
 
-          {/* Address Field (only if delivery) */}
           {delivery && (
             <TextInput
-              placeholder="Address"
+              placeholder="Delivery Address"
               value={address}
               onChangeText={setAddress}
               style={{
@@ -241,7 +278,6 @@ export default function Order() {
             />
           )}
 
-          {/* Order Button */}
           <TouchableOpacity
             onPress={handleOrder}
             style={{
@@ -260,17 +296,101 @@ export default function Order() {
             </Text>
           </TouchableOpacity>
 
-          {/* Total */}
-          <Text
+          {/* Price breakdown */}
+
+          <View
             style={{
-              textAlign: "center",
-              color: "#1e40af",
-              fontWeight: "700",
-              fontSize: 16,
+              marginTop: 16,
+              backgroundColor: "#f0f9ff",
+              padding: 16,
+              borderRadius: 16,
+              shadowColor: "#000",
+              shadowOpacity: 0.05,
+              shadowOffset: { width: 0, height: 4 },
+              shadowRadius: 6,
+              elevation: 3,
             }}
           >
-            Total: ₱{calculatePrice()}
-          </Text>
+            <Text
+              style={{
+                color: "#1e3a8a",
+                fontWeight: "800",
+                fontSize: 18,
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
+              💧 Order Summary
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#2563eb", fontWeight: "600" }}>
+                Refill(s)
+              </Text>
+              <Text style={{ color: "#1e40af", fontWeight: "700" }}>
+                ₱{refill}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#ef4444", fontWeight: "600" }}>
+                Container fee
+              </Text>
+              <Text style={{ color: "#b91c1c", fontWeight: "700" }}>
+                ₱{container}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#16a34a", fontWeight: "600" }}>
+                Delivery fee
+              </Text>
+              <Text style={{ color: "#166534", fontWeight: "700" }}>
+                ₱{deliveryFee}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                borderTopWidth: 1,
+                borderTopColor: "#cbd5e1",
+                marginVertical: 10,
+              }}
+            />
+
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Text
+                style={{ color: "#1e3a8a", fontWeight: "800", fontSize: 16 }}
+              >
+                Total
+              </Text>
+              <Text
+                style={{ color: "#1e40af", fontWeight: "900", fontSize: 16 }}
+              >
+                ₱{total}
+              </Text>
+            </View>
+          </View>
         </MotiView>
       </View>
     </ScrollView>

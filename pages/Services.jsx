@@ -91,7 +91,7 @@ export default function Services() {
               shadowOffset: { width: 0, height: 4 },
               shadowRadius: 6,
               elevation: 3,
-              marginBottom: 16, // ✅ Space between cards
+              marginBottom: 16,
             }}
           >
             <Ionicons name={item.icon} size={36} color="#2563eb" />

@@ -45,6 +45,7 @@ export default function Profile({ onLogout }) {
       orderByChild("userId"),
       equalTo(user?.uid)
     );
+
     const unsubscribe = onValue(ordersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -52,8 +53,10 @@ export default function Profile({ onLogout }) {
           id: key,
           ...data[key],
         }));
-        setOrders(parsedOrders.reverse());
-        setFilteredOrders(parsedOrders.reverse());
+        // Reverse the array so latest orders show at the top
+        const reversedOrders = parsedOrders.reverse();
+        setOrders(reversedOrders);
+        setFilteredOrders(reversedOrders);
       } else {
         setOrders([]);
         setFilteredOrders([]);
@@ -64,7 +67,6 @@ export default function Profile({ onLogout }) {
     return () => unsubscribe();
   }, []);
 
-  // 🔍 Handle Search & Filter
   useEffect(() => {
     let updatedOrders = orders;
 
